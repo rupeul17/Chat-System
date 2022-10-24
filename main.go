@@ -1,11 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/websocket"
 )
 
@@ -27,6 +29,37 @@ var Broadcast = make(chan Message)
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+}
+
+func CheckLoginInfo(userid string, userpw string) int {
+
+	var UserCount int
+
+	db, err := sql.Open("mysql", "root:1234@tcp(localhost:3306)/member_db")
+	if err != nil {
+		log.Println(err.Error())
+		return -1
+	}
+
+	defer db.Close()
+
+	result, err := db.Query("SELECT count(*) FROM member WHERE ID=? AND PASSWD=?", userid, userpw)
+	if err != nil {
+		log.Println(err.Error())
+		return -1
+	}
+
+	for result.Next() {
+		if err := result.Scan(&UserCount); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if UserCount > 0 {
+		return 1
+	} else {
+		return -1
+	}
 }
 
 func BroadcastHandler() {
@@ -70,23 +103,47 @@ func socketHandler(w http.ResponseWriter, r *http.Request) {
 		msgType, p, err := conn.ReadMessage()
 		if err != nil {
 			log.Printf("conn.ReadMessage : %v\n", err)
+			delete(Clients, conn)
+			return
 		}
 
 		data := ClientMsgInfo{}
 		json.Unmarshal([]byte(p), &data)
 		fmt.Println(string(p))
-
-		Msg := Message{
-			MsgType: msgType,
-		}
+		var res string
 
 		if data.MsgType == "LOGIN" {
-			Msg.MsgInfo.Msg = p
-			Broadcast <- Msg
-		} else {
-			Msg.MsgInfo.Msg = p
-			Broadcast <- Msg
+			if CheckLoginInfo(data.UserId, data.UserPw) < 0 {
+				fmt.Println("Login fail")
+				res = "LOGIN_FAIL"
+
+			} else {
+				fmt.Println("Login Success")
+				res = "LOGIN_SUCC"
+			}
+		} else if data.MsgType == "MESSAGE" {
+			fmt.Println("message receive")
+
+			data, _ := json.Marshal(data.Msg)
+			for ClientConn := range Clients {
+				if err := ClientConn.WriteMessage(msgType, data); err != nil {
+					log.Printf("conn.WriteMessage : %v\n", err)
+					delete(Clients, ClientConn)
+					return
+				} else {
+					fmt.Println("Msg send")
+				}
+			}
 		}
+
+		bytedata, _ := json.Marshal(res)
+
+		if err := conn.WriteMessage(msgType, bytedata); err != nil {
+			log.Printf("conn.WriteMessage : %v\n", err)
+			delete(Clients, conn)
+			return
+		}
+		fmt.Printf("res msg send\n")
 	}
 }
 

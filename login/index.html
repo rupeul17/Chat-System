@@ -3,9 +3,27 @@
 <head>
     <meta charset="EUC-KR">
     <title>rupeul's chat</title>
-    <link rel="stylesheet" type="text/ccs" href="./style.ccs?after">
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+    <style>
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translate3d(0, 0, 0);
+            }
+            to {
+                opacity: 1;
+                transform: translateZ(0);
+            }
+        }
+     
+        .main {
+            position: relative;
+            animation: fadeIn 2s;
+        }
+    </style>    
+<div class="wrapper">
     <div class="main">
         <h1 class="logo">rupeul chat</h1>
         <div class="container">
@@ -14,7 +32,8 @@
             <button id="login" class="account">login</button>
             <p id="alert" class="account"> </p>
         </div>
-    </div>   
+    </div>
+</div>   
     <script src="script.js"></script>
 </body>
 </html>

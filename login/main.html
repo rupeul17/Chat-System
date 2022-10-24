@@ -103,7 +103,9 @@
         log('Closed');
       };
       websocket.onmessage = function (e) {
-        log(e.data, 'Message received')
+        //log(e.data, 'Message received')
+        recData = JSON.parse(e.data);
+        log(recData, 'Message received');
       };
       websocket.onerror = function (e) {
         log('Error (see console)');
@@ -113,7 +115,11 @@
         e.preventDefault();
         var data = $('#chat-text').val();
         if (data) {
-          websocket.send(data);
+          var obj = new Object();
+          obj.msgtype = "MESSAGE";
+          obj.msg = data;
+          //websocket.send(data);
+          websocket.send(JSON.stringify(obj))
           window.scrollTo(0, document.body.scrollHeight)
           $('#chat-text').val('');
         }
