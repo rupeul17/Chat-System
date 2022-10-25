@@ -116,8 +116,10 @@
         var data = $('#chat-text').val();
         if (data) {
           var obj = new Object();
+          var usermsg = new Object();
           obj.msgtype = "MESSAGE";
-          obj.msg = data;
+          usermsg.msg = data;
+          obj.msg = usermsg;
           //websocket.send(data);
           websocket.send(JSON.stringify(obj))
           window.scrollTo(0, document.body.scrollHeight)

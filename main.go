@@ -11,16 +11,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type ClientMsgInfo struct {
-	MsgType string
-	UserId  string
-	UserPw  string
-	Msg     []byte
-}
-
 type Message struct {
-	MsgType int
-	MsgInfo ClientMsgInfo
+	MsgType string
+	Msg     map[string]interface{}
 }
 
 var Clients = make(map[*websocket.Conn]bool)
@@ -31,7 +24,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func CheckLoginInfo(userid string, userpw string) int {
+func CheckLoginInfo(userid interface{}, userpw interface{}) int {
 
 	var UserCount int
 
@@ -62,6 +55,7 @@ func CheckLoginInfo(userid string, userpw string) int {
 	}
 }
 
+/*
 func BroadcastHandler() {
 
 	for {
@@ -78,8 +72,11 @@ func BroadcastHandler() {
 		}
 	}
 }
-
+*/
 func socketHandler(w http.ResponseWriter, r *http.Request) {
+
+	var res string
+
 	/*
 		요청 및 응답을 http -> ws 로 변경한다.
 	*/
@@ -95,6 +92,7 @@ func socketHandler(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	Clients[conn] = true
+	fmt.Println("new connection created")
 
 	for {
 		/*
@@ -107,43 +105,50 @@ func socketHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		data := ClientMsgInfo{}
+		/*
+			json 메시지를 decoding 한다.
+		*/
+		data := Message{}
 		json.Unmarshal([]byte(p), &data)
 		fmt.Println(string(p))
-		var res string
 
 		if data.MsgType == "LOGIN" {
-			if CheckLoginInfo(data.UserId, data.UserPw) < 0 {
+			/*
+				LOGIN 메시지이면 ID, PW 입력하여 로그인한다.
+			*/
+			fmt.Println(data.Msg["userid"], data.Msg["userpw"])
+			if CheckLoginInfo(data.Msg["userid"], data.Msg["userpw"]) < 0 {
 				fmt.Println("Login fail")
 				res = "LOGIN_FAIL"
-
 			} else {
 				fmt.Println("Login Success")
 				res = "LOGIN_SUCC"
 			}
-		} else if data.MsgType == "MESSAGE" {
-			fmt.Println("message receive")
 
-			data, _ := json.Marshal(data.Msg)
+			/*
+				결과를 클라이언트로 전송한다.
+			*/
+			bytedata, _ := json.Marshal(res)
+			if err := conn.WriteMessage(msgType, bytedata); err != nil {
+				log.Printf("conn.WriteMessage : %v\n", err)
+				delete(Clients, conn)
+				return
+			}
+		} else if data.MsgType == "MESSAGE" {
+			/*
+				MESSAGE 이면 연결된 클라이언트 전체에게 메시지를 전달한다.
+			*/
+			fmt.Printf("Msg send :: %s\n", data.Msg["msg"])
+
+			data_msg, _ := json.Marshal(data.Msg["msg"])
 			for ClientConn := range Clients {
-				if err := ClientConn.WriteMessage(msgType, data); err != nil {
+				if err := ClientConn.WriteMessage(msgType, data_msg); err != nil {
 					log.Printf("conn.WriteMessage : %v\n", err)
 					delete(Clients, ClientConn)
 					return
-				} else {
-					fmt.Println("Msg send")
 				}
 			}
 		}
-
-		bytedata, _ := json.Marshal(res)
-
-		if err := conn.WriteMessage(msgType, bytedata); err != nil {
-			log.Printf("conn.WriteMessage : %v\n", err)
-			delete(Clients, conn)
-			return
-		}
-		fmt.Printf("res msg send\n")
 	}
 }
 
@@ -161,7 +166,7 @@ func main() {
 	/*
 		broadcast 고루틴 실행
 	*/
-	go BroadcastHandler()
+	//go BroadcastHandler()
 
 	/*
 		설정 포트로 웹 서버를 실행한다.

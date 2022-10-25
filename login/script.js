@@ -7,9 +7,11 @@ var ws;
 login.addEventListener('click', () => {
 
     var obj = new Object();
-    obj.msgtype = "LOGIN"
-    obj.userid = id.value;
-    obj.userpw = password.value;
+    var logininfo = new Object();
+    obj.msgtype = "LOGIN";
+    logininfo.userid = id.value;
+    logininfo.userpw = password.value;
+    obj.msg = logininfo;
 
     ws = new WebSocket('ws://' + window.location.host + '/ws');
     ws.onopen = function(event) {
