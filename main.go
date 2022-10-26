@@ -18,6 +18,7 @@ type Message struct {
 
 var Clients = make(map[*websocket.Conn]bool)
 var Broadcast = make(chan Message)
+var ClientId = make(map[*websocket.Conn]string)
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,

@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Google App Engine Flexible Environment - Golang Websockets Chat</title>
+  <title>Golang Websockets Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta charset="utf-8">
   <style>
@@ -33,7 +33,7 @@
 
     form button {
       width: 9%;
-      background: rgb(130, 224, 255);
+      background: rgb(237, 238, 236);
       border: none;
       padding: 10px;
     }
@@ -58,22 +58,41 @@
 
     section {
       background-color: #eee;
-      border: 3px dashed #888;
-      border-radius: 10px;
+      border: 2px dashed #888;
+      border-radius: 0px;
       margin: 30px;
       margin-bottom: 80px;
       padding: 5px;
     }
+
+    div {
+        width: 100%;
+        height: 670px;
+        border: 1px solid #b9bcbe;
+      }
+      div.left {
+        width: 75%;
+        float: left;
+        box-sizing: border-box;
+        background: #fefeff;
+      }
+      div.right {
+        width: 25%;
+        float: right;
+        box-sizing: border-box;
+        background: #d4d1bf93;
+      }
   </style>
 </head>
 
 <body>
-
-  <h1>Websockets Chat Demo</h1>
+<div>
+  <div class="left">
+  <h1>Websockets Chat</h1>
 
   <form id="chat-form">
-    <input type="text" id="chat-text" autocomplete="off" placeholder="Enter some text...">
-    <button type="submit">Send</button>
+    <input type="text" id="chat-text" autocomplete="off" placeholder="내용을 입력하세요.">
+    <button type="submit">전송</button>
   </form>
 
   <section>
@@ -128,6 +147,11 @@
       });
     });
   </script>
+  </div>
+  <div class="right">
+
+  </div>
+  </div>
 </body>
 
 </html>
